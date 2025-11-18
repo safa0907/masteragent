@@ -9,6 +9,7 @@ const { getWeatherTool } = require("./tools/getWeatherTool");
 const { AgentOrchestrator } = require("./orchestrator");
 const { ShopperAgentClient } = require("./shopperAgentClient");
 const { TaxiAgentClient } = require("./taxiAgentClient");
+const { CoordinationManager } = require("./coordinationManager");
 
 const weatherAgent = new AgentApplicationBuilder().build();
 
@@ -40,6 +41,7 @@ const agent = createReactAgent({
 const orchestrator = new AgentOrchestrator();
 const shopperClient = new ShopperAgentClient();
 const taxiClient = new TaxiAgentClient();
+const coordinationManager = new CoordinationManager(agent);
 
 const sysMessage = new SystemMessage(`
 You are a friendly assistant that helps people find a weather forecast for a given time and place.
@@ -56,12 +58,24 @@ Respond in JSON format with the following JSON schema, and do not use markdown i
 weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
   const userMessage = context.activity.text;
   
-  // Route the message to the appropriate agent
+  // First, check if this is a complex multi-agent query
+  const complexResponse = await coordinationManager.handleComplexQuery(
+    userMessage, 
+    context
+  );
+  
+  if (complexResponse) {
+    // Complex query handled by coordination manager
+    console.log("✅ Multi-agent coordination completed");
+    await context.sendActivity(complexResponse);
+    return;
+  }
+  
+  // Otherwise, route to single agent as before
   const targetAgent = await orchestrator.routeToAgent(userMessage);
   console.log(`Routing message to: ${targetAgent} agent`);
 
   if (targetAgent === "shopper") {
-    // Handle with shopper agent
     try {
       const response = await shopperClient.query(userMessage);
       await context.sendActivity(response);
@@ -70,7 +84,6 @@ weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
       await context.sendActivity("Sorry, I encountered an error with the shopping agent. Please try again.");
     }
   } else if (targetAgent === "taxi") {
-    // Handle with taxi agent
     try {
       const response = await taxiClient.query(userMessage);
       await context.sendActivity(response);
@@ -79,7 +92,7 @@ weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
       await context.sendActivity("Sorry, I encountered an error with the taxi agent. Please try again.");
     }
   } else {
-    // Handle with weather agent (default)
+    // Weather agent logic (existing code)
     const llmResponse = await agent.invoke(
       {
         messages: [sysMessage, new HumanMessage(userMessage)],
