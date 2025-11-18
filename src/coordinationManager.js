@@ -159,7 +159,10 @@ Respond in JSON format only:
   }
 
   async getTaxiRecommendations(queryContext, weatherData) {
-    let taxiQuery = `I need a taxi in ${queryContext.location} ${queryContext.date}`;
+    // Build a data-focused query that forces the agent to use Fabric data
+    let taxiQuery = `IMPORTANT: Query the NYC taxi database for actual fare data.
+
+User request: I need a taxi in ${queryContext.location} ${queryContext.date}`;
     
     if (queryContext.time) {
       taxiQuery += ` at ${queryContext.time}`;
@@ -172,9 +175,20 @@ Respond in JSON format only:
       taxiQuery += ` The weather will be ${weatherData.condition}, ${weatherData.temperature}°F`;
       
       if (weatherData.condition === "Snowy" || weatherData.condition === "Rainy") {
-        taxiQuery += `. Please account for weather delays and provide timing recommendations.`;
+        taxiQuery += `. Account for weather delays.`;
       }
     }
+    
+    // Explicitly request data from Fabric
+    taxiQuery += `\n\nPlease provide from the NYC taxi database:
+1. Average fare_amount for this route/time
+2. Average trip_distance
+3. Typical total_amount (including surcharges)
+4. Average tip_amount
+5. Congestion_surcharge if applicable
+6. Recommended pickup time accounting for traffic
+
+Query the database and use actual data, not general estimates.`;
     
     console.log("🚕 Taxi query:", taxiQuery);
     

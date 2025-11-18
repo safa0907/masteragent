@@ -10,6 +10,7 @@ const { AgentOrchestrator } = require("./orchestrator");
 const { ShopperAgentClient } = require("./shopperAgentClient");
 const { TaxiAgentClient } = require("./taxiAgentClient");
 const { CoordinationManager } = require("./coordinationManager");
+const { MultiStopJourneyPlanner } = require("./multiStopJourneyPlanner");
 
 const weatherAgent = new AgentApplicationBuilder().build();
 
@@ -42,6 +43,7 @@ const orchestrator = new AgentOrchestrator();
 const shopperClient = new ShopperAgentClient();
 const taxiClient = new TaxiAgentClient();
 const coordinationManager = new CoordinationManager(agent);
+const journeyPlanner = new MultiStopJourneyPlanner(agent);
 
 const sysMessage = new SystemMessage(`
 You are a friendly assistant that helps people find a weather forecast for a given time and place.
@@ -58,7 +60,22 @@ Respond in JSON format with the following JSON schema, and do not use markdown i
 weatherAgent.onActivity(ActivityTypes.Message, async (context, state) => {
   const userMessage = context.activity.text;
   
-  // First, check if this is a complex multi-agent query
+  console.log("📨 Received message:", userMessage);
+  
+  // First, check if this is a multi-stop journey request
+  console.log("🔍 Checking if multi-stop journey...");
+  const journeyPlan = await journeyPlanner.planMultiStopJourney(userMessage, context);
+  
+  if (journeyPlan) {
+    // Multi-stop journey planned successfully
+    console.log("✅ Multi-stop journey planning completed");
+    await context.sendActivity(journeyPlan);
+    return;
+  }
+  
+  console.log("⏭️ Not a multi-stop journey, checking complex query...");
+  
+  // Next, check if this is a complex multi-agent query
   const complexResponse = await coordinationManager.handleComplexQuery(
     userMessage, 
     context

@@ -10,8 +10,30 @@ class TaxiAgentClient {
     this.agentId = "asst_AopGuMDQM94bZt5Pa2xXyURl";
   }
 
+  /**
+   * Detects if a query needs Fabric data lookup
+   */
+  isDataQuery(message) {
+    const dataKeywords = [
+      'fare', 'cost', 'price', 'total', 'amount', 'average',
+      'distance', 'trip', 'surcharge', 'tip', 'how much',
+      'budget', 'expense', 'charge', 'payment'
+    ];
+    const lower = message.toLowerCase();
+    return dataKeywords.some(keyword => lower.includes(keyword));
+  }
+
   async query(userMessage) {
     try {
+      // Enhance data queries to explicitly request Fabric data
+      let enhancedMessage = userMessage;
+      const isDataQuery = this.isDataQuery(userMessage);
+      
+      if (isDataQuery) {
+        enhancedMessage = `${userMessage}\n\nIMPORTANT: Use your fabric_dataagent tool to query the NYC taxi database for actual data. Provide specific numbers from the database, not estimates.`;
+        console.log("[TAXI AGENT] Enhanced query to force Fabric data lookup");
+      }
+      
       // Get the agent
       const agent = await this.project.agents.getAgent(this.agentId);
       console.log(`Retrieved taxi agent: ${agent.name}`);
@@ -22,8 +44,8 @@ class TaxiAgentClient {
       const thread = await this.project.agents.threads.create();
       console.log(`Created thread, ID: ${thread.id}`);
 
-      // Create message - the agent should use fabric_dataagent tool automatically
-      await this.project.agents.messages.create(thread.id, "user", userMessage);
+      // Create message - use enhanced message for data queries
+      await this.project.agents.messages.create(thread.id, "user", enhancedMessage);
 
       // Create run
       let run = await this.project.agents.runs.create(thread.id, agent.id);

@@ -1,0 +1,44 @@
+-- Step 1: Create the lookup table
+CREATE TABLE taxi_zone_lookup (
+    LocationID INT PRIMARY KEY,
+    Borough VARCHAR(50),
+    Zone VARCHAR(100),
+    ServiceArea VARCHAR(50)
+);
+
+-- Step 2: Insert the location data
+INSERT INTO taxi_zone_lookup (LocationID, Borough, Zone, ServiceArea) VALUES
+(18, 'Queens', 'Astoria', 'Boro Zone'),
+(33, 'Queens', 'Bay Terrace/Fort Totten', 'Boro Zone'),
+(36, 'Queens', 'Bayside', 'Boro Zone'),
+(43, 'Manhattan', 'Central Park', 'Yellow Zone'),
+(66, 'Manhattan', 'Clinton East', 'Yellow Zone'),
+(68, 'Manhattan', 'Clinton West', 'Yellow Zone'),
+(73, 'Brooklyn', 'Columbia Street', 'Boro Zone'),
+(83, 'Queens', 'Corona', 'Boro Zone'),
+(86, 'Brooklyn', 'Crown Heights North', 'Boro Zone'),
+(93, 'Queens', 'East Elmhurst', 'Airports'),
+(118, 'Queens', 'Fresh Meadows', 'Boro Zone'),
+(136, 'Queens', 'JFK Airport', 'Airports'),
+(138, 'Queens', 'LaGuardia Airport', 'Airports'),
+(143, 'Manhattan', 'Lincoln Square East', 'Yellow Zone'),
+(153, 'Manhattan', 'Meatpacking/West Village West', 'Yellow Zone'),
+(154, 'Manhattan', 'Midtown Center', 'Yellow Zone'),
+(172, 'Queens', 'Oakland Gardens', 'Boro Zone'),
+(186, 'Manhattan', 'Penn Station/Madison Sq West', 'Yellow Zone'),
+(187, 'Brooklyn', 'Park Slope', 'Boro Zone'),
+(204, 'Queens', 'Queensboro Hill', 'Boro Zone'),
+(211, 'Queens', 'Rego Park', 'Boro Zone'),
+(221, 'Manhattan', 'Seaport', 'Yellow Zone'),
+(236, 'Manhattan', 'Times Sq/Theatre District', 'Yellow Zone'),
+(241, 'Manhattan', 'Turtle Bay North', 'Yellow Zone'),
+(247, 'Manhattan', 'Upper East Side North', 'Yellow Zone'),
+(254, 'Manhattan', 'Upper West Side South', 'Yellow Zone'),
+(255, 'Manhattan', 'Upper West Side North', 'Yellow Zone');
+
+-- Step 3: Verify the data
+SELECT * FROM taxi_zone_lookup ORDER BY LocationID;
+
+-- Step 4: Create indexes for better query performance
+CREATE INDEX idx_zone ON taxi_zone_lookup(Zone);
+CREATE INDEX idx_borough ON taxi_zone_lookup(Borough);
